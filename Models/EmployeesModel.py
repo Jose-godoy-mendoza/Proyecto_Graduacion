@@ -119,3 +119,25 @@ def get_work_hours(employee_id, start_date=None, end_date=None):
         formatted_data.append([fecha.strftime("%d-%m-%Y"), f"{record[1]} horas"])
 
     return formatted_data
+
+
+def get_employee_email(employee_id):
+    # Conectar a la base de datos
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Definir la consulta para obtener el correo electrónico
+    query = "SELECT email FROM empleados WHERE id_empleado = ?"
+    cursor.execute(query, (employee_id,))
+
+    # Obtener el resultado
+    result = cursor.fetchone()
+
+    # Cerrar la conexión
+    cursor.close()
+    connection.close()
+
+    if result:
+        return result[0]  # Retorna el correo electrónico
+    else:
+        return None  # Si no se encuentra, retorna None

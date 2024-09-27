@@ -8,7 +8,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 from Models.EmployeesModel import get_employee_profile, update_employee_profile, get_work_hours
-from Controllers.EmployeeController import fetch_work_hours
+from Controllers.EmployeeController import fetch_work_hours, send_report
+from Controllers.PdfController import generar_pdf
 
 
 def Pull_Up_Profile(Employee_id, Nombre):
@@ -56,16 +57,7 @@ def Pull_Up_Profile(Employee_id, Nombre):
     ttk.Button(perfil_window, text="Guardar cambios", command=Save_Changes).grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
 
-def update_table_with_dates():
-    # Obtener las fechas seleccionadas
-    start_date = start_date_entry.get_date()
-    end_date = end_date_entry.get_date()
-    
-    # Llamar a la función del modelo para obtener las horas trabajadas
-    data = get_work_hours(employee_id, start_date, end_date)
-    
-    # Actualizar la tabla con los nuevos datos
-    update_table(data)
+
 
 
 # Funciones
@@ -128,23 +120,8 @@ def generate_custom_report():
     file_name = generate_report(start_date, end_date)
     messagebox.showinfo("Éxito", f"Reporte generado: {file_name}")
 
-def send_report():
-    recipient_email = "empleado@example.com"  # Aquí deberías obtener el correo del empleado desde la base de datos
-    start_date = start_date_entry.get_date()
-    end_date = end_date_entry.get_date()
-    file_name = generate_report(start_date, end_date)
-    
-    send_email(file_name, recipient_email)
-    messagebox.showinfo("Éxito", "Reporte enviado exitosamente.")
 
-def update_table_with_dates():
-    start_date = start_date_entry.get_date()
-    end_date = end_date_entry.get_date()
-    if start_date > end_date:
-        messagebox.showerror("Error", "La fecha de inicio no puede ser posterior a la fecha de fin.")
-        return
-    data = fetch_work_hours(start_date, end_date)
-    update_table(data)
+
 
 def log_out():
     messagebox.showinfo("Cerrar sesión", "Has cerrado sesión.")
@@ -212,8 +189,13 @@ def start_Employee_View(Employee_id, Nombre, Apellido):
     update_button = ttk.Button(root, text="Actualizar tabla", command=update_table_with_dates)
     update_button.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky=tk.W)
 
+    def Send_PDF():
+        start_date = start_date_entry.get_date()
+        end_date = end_date_entry.get_date()
+        send_report(Employee_id, start_date, end_date)
+
     # Botón para enviar el reporte por correo
-    send_button = ttk.Button(root, text="Enviar Reporte por Correo", command=send_report)
+    send_button = ttk.Button(root, text="Enviar Reporte por Correo", command=Send_PDF)
     send_button.grid(row=6, column=0, columnspan=2, padx=10, pady=10, sticky=tk.W)
 
     def on_closing():
