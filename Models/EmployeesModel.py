@@ -68,47 +68,54 @@ def update_employee_profile(employee_id, new_email, new_phone):
 
 
 def get_work_hours(employee_id, start_date=None, end_date=None):
-    connection = None
-    cursor = None
-    try:
-        # Conexión a la base de datos
-        connection = get_db_connection()
-        cursor = connection.cursor()
+    # Conectar a la base de datos
+    connection = get_db_connection()
+    cursor = connection.cursor()
 
-        # Consulta SQL para obtener las horas trabajadas de un empleado
+    # Definir la consulta SQL y los parámetros
+    if start_date and end_date:
+        # Asegúrate de que las fechas sean del tipo correcto y en el formato adecuado
+        start_date_str = start_date.strftime("%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
+
         query = """
-            SELECT TO_CHAR(fecha, 'DD-MM-YYYY') AS dia, horas_trabajadas
-            FROM registros_asistencia
-            WHERE id_empleado = :id_empleado
+        SELECT fecha, horas_totales 
+        FROM horas_trabajadas 
+        WHERE id_empleado = ? 
+        AND fecha BETWEEN ? AND ?
         """
+        params = (employee_id, start_date_str, end_date_str)
+    else:
+        # Obtener el mes y año actual
+        current_month = datetime.now().month
+        current_year = datetime.now().year
 
-        # Si no se proporciona un rango de fechas, usar el mes actual
-        if not start_date and not end_date:
-            # Obtener el mes y año actual
-            current_month_start = datetime.now().strftime('%Y-%m-01')
-            current_month_end = datetime.now().strftime('%Y-%m-%d')
+        query = """
+        SELECT fecha, horas_totales 
+        FROM horas_trabajadas 
+        WHERE id_empleado = ? 
+        AND MONTH(fecha) = ? 
+        AND YEAR(fecha) = ?
+        """
+        params = (employee_id, current_month, current_year)
 
-            query += " AND fecha BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') AND LAST_DAY(TO_DATE(:start_date, 'YYYY-MM-DD'))"
-            cursor.execute(query, id_empleado=employee_id, start_date=current_month_start)
-        else:
-            # Si se proporciona un rango de fechas, utilizarlo
-            query += " AND fecha BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') AND TO_DATE(:end_date, 'YYYY-MM-DD')"
-            cursor.execute(query, id_empleado=employee_id, start_date=start_date, end_date=end_date)
+    # Ejecutar la consulta con los parámetros
+    cursor.execute(query, params)
 
-        # Obtener los resultados de la consulta
-        rows = cursor.fetchall()
+    # Recoger los resultados
+    data = cursor.fetchall()
 
-        # Formatear los resultados en una lista de listas para la tabla
-        data = [[row[0], f"{row[1]} horas"] for row in rows]
+    # Cerrar la conexión
+    cursor.close()
+    connection.close()
 
-        return data
+    # Convertir los resultados a una lista de listas
+    formatted_data = []
+    for record in data:
+        fecha = record[0]  # Suponemos que es la columna de fecha
+        if isinstance(fecha, str):
+            # Si fecha es una cadena, convertirla a datetime
+            fecha = datetime.strptime(fecha, "%Y-%m-%d")  # Ajusta el formato según tu base de datos
+        formatted_data.append([fecha.strftime("%d-%m-%Y"), f"{record[1]} horas"])
 
-    except cx_Oracle.DatabaseError as e:
-        print(f"Error al obtener las horas trabajadas: {e}")
-        return []
-    
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+    return formatted_data

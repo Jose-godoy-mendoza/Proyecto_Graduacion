@@ -7,7 +7,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
-from Models.EmployeesModel import get_employee_profile, update_employee_profile
+from Models.EmployeesModel import get_employee_profile, update_employee_profile, get_work_hours
+from Controllers.EmployeeController import fetch_work_hours
 
 
 def Pull_Up_Profile(Employee_id, Nombre):
@@ -55,21 +56,17 @@ def Pull_Up_Profile(Employee_id, Nombre):
     ttk.Button(perfil_window, text="Guardar cambios", command=Save_Changes).grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
 
-# Simular datos de ejemplo
-def get_work_hours(start_date=None, end_date=None):
-    # Esta función simula la obtención de horas trabajadas de la base de datos
-    data = [
-        ["01-09-2024", "8 horas"],
-        ["02-09-2024", "7 horas"],
-        ["03-09-2024", "8 horas"],
-        ["04-09-2024", "6 horas"],
-    ]
-    # Si hay fechas seleccionadas, filtrar los datos
-    if start_date and end_date:
-        # Simulación de filtrado (aquí puedes hacer una consulta real)
-        filtered_data = [entry for entry in data if start_date <= entry[0] <= end_date]
-        return filtered_data
-    return data
+def update_table_with_dates():
+    # Obtener las fechas seleccionadas
+    start_date = start_date_entry.get_date()
+    end_date = end_date_entry.get_date()
+    
+    # Llamar a la función del modelo para obtener las horas trabajadas
+    data = get_work_hours(employee_id, start_date, end_date)
+    
+    # Actualizar la tabla con los nuevos datos
+    update_table(data)
+
 
 # Funciones
 def update_table(data):
@@ -146,7 +143,7 @@ def update_table_with_dates():
     if start_date > end_date:
         messagebox.showerror("Error", "La fecha de inicio no puede ser posterior a la fecha de fin.")
         return
-    data = get_work_hours(start_date, end_date)
+    data = fetch_work_hours(start_date, end_date)
     update_table(data)
 
 def log_out():
@@ -183,7 +180,7 @@ def start_Employee_View(Employee_id, Nombre, Apellido):
     table.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky=(tk.W, tk.E, tk.N, tk.S))
 
     # Inicializar tabla con datos del mes actual
-    data = get_work_hours()
+    data = get_work_hours(Employee_id)  # Obtener horas trabajadas del mes actual
     update_table(data)
 
     # Selección de rango de fechas
@@ -199,6 +196,17 @@ def start_Employee_View(Employee_id, Nombre, Apellido):
     end_date_label.grid(row=4, column=0, padx=10, pady=5, sticky=tk.W)
     end_date_entry = DateEntry(root)
     end_date_entry.grid(row=4, column=1, padx=10, pady=5, sticky=tk.E)
+
+    def update_table_with_dates():
+        # Obtener las fechas seleccionadas
+        start_date = start_date_entry.get_date()
+        end_date = end_date_entry.get_date()
+        
+        # Llamar a la función del modelo para obtener las horas trabajadas
+        data = get_work_hours(Employee_id, start_date, end_date)
+        
+        # Actualizar la tabla con los nuevos datos
+        update_table(data)
 
     # Botón para actualizar la tabla
     update_button = ttk.Button(root, text="Actualizar tabla", command=update_table_with_dates)

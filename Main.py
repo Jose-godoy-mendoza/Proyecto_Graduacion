@@ -4,6 +4,7 @@ from tkinter import Label, messagebox
 import cv2
 from PIL import Image, ImageTk
 from Controllers.LoginController import login
+from Models.EmployeesModel import get_employee_profile, update_employee_profile, get_work_hours
 
 # Función para actualizar la imagen de la cámara en la interfaz
 def update_frame():
@@ -17,7 +18,7 @@ def update_frame():
     camera_label.after(10, update_frame)
 
 
-
+#get_work_hours(1)
 
 # Inicializar ventana principal
 root = tk.Tk()
