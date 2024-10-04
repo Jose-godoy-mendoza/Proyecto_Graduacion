@@ -10,7 +10,7 @@ def get_employee_by_credentials(username, password):
     cursor = connection.cursor()
     
     query = """
-    SELECT u.Id_empleado, e.nombre, e.apellido 
+    SELECT u.Id_empleado, e.nombre, e.apellido, u.rol
     FROM Usuarios u
     JOIN Empleados e ON u.Id_empleado = e.Id_empleado
     WHERE u.nombre_usuario = ? AND u.contraseña = ?
@@ -104,7 +104,6 @@ def get_work_hours(employee_id, start_date=None, end_date=None):
 
     # Recoger los resultados
     data = cursor.fetchall()
-
     # Cerrar la conexión
     cursor.close()
     connection.close()
@@ -121,13 +120,13 @@ def get_work_hours(employee_id, start_date=None, end_date=None):
     return formatted_data
 
 
-def get_employee_email(employee_id):
+def get_employee_email_name(employee_id):
     # Conectar a la base de datos
     connection = get_db_connection()
     cursor = connection.cursor()
 
     # Definir la consulta para obtener el correo electrónico
-    query = "SELECT email FROM empleados WHERE id_empleado = ?"
+    query = "SELECT email, nombre, apellido FROM empleados WHERE id_empleado = ?"
     cursor.execute(query, (employee_id,))
 
     # Obtener el resultado
@@ -138,6 +137,11 @@ def get_employee_email(employee_id):
     connection.close()
 
     if result:
-        return result[0]  # Retorna el correo electrónico
+        email, nombre, apellido = result
+        return {
+            "email": email,
+            "nombre": nombre,
+            "apellido": apellido
+        }  # Retorna un diccionario con el correo, nombre y apellido
     else:
         return None  # Si no se encuentra, retorna None

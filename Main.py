@@ -5,6 +5,8 @@ import cv2
 from PIL import Image, ImageTk
 from Controllers.LoginController import login
 from Models.EmployeesModel import get_employee_profile, update_employee_profile, get_work_hours
+from Models.ManagerModel import get_employees_with_hours
+
 
 # Función para actualizar la imagen de la cámara en la interfaz
 def update_frame():
