@@ -83,7 +83,7 @@ def on_login_click():
             messagebox.showinfo("Login exitoso", f"Bienvenido, {result[1]} {result[2]}")
             #root.destroy()  # Cerrar ventana de login
         else:
-            messagebox.showerror("Error", "Usuario o contraseña incorrectos, pndejo")
+            messagebox.showerror("Error", "Usuario o contraseña incorrectos")
 
 
 login_button = ttk.Button(login_frame, text="Entrar", command=on_login_click)

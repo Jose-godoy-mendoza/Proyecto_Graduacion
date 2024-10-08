@@ -1,11 +1,58 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
-from Controllers.ManagerController import get_employees_with_hours, send_report
+from Controllers.ManagerController import get_employees_with_hours, send_report, fetch_employees_data
 from Models.EmployeesModel import get_work_hours
+from Models.ManagerModel import Delete_Employee, insert_employee
 
 
 
+# AGREGAR UN NUEVO EMPLEADO
+def nueva_ventana_empleado():
+    ventana_empleado = tk.Toplevel(root)
+    ventana_empleado.title("Agregar Nuevo Empleado")
+
+    # Campos de entrada para los detalles del empleado
+    ttk.Label(ventana_empleado, text="Nombre:").grid(row=0, column=0, padx=10, pady=5)
+    entry_nombre = ttk.Entry(ventana_empleado)
+    entry_nombre.grid(row=0, column=1, padx=10, pady=5)
+
+    ttk.Label(ventana_empleado, text="Apellido:").grid(row=1, column=0, padx=10, pady=5)
+    entry_apellido = ttk.Entry(ventana_empleado)
+    entry_apellido.grid(row=1, column=1, padx=10, pady=5)
+
+    ttk.Label(ventana_empleado, text="Email:").grid(row=2, column=0, padx=10, pady=5)
+    entry_email = ttk.Entry(ventana_empleado)
+    entry_email.grid(row=2, column=1, padx=10, pady=5)
+
+    ttk.Label(ventana_empleado, text="Fecha de Ingreso:").grid(row=3, column=0, padx=10, pady=5)
+    entry_fecha_ingreso = ttk.Entry(ventana_empleado)
+    entry_fecha_ingreso.grid(row=3, column=1, padx=10, pady=5)
+
+    ttk.Label(ventana_empleado, text="Teléfono:").grid(row=4, column=0, padx=10, pady=5)
+    entry_telefono = ttk.Entry(ventana_empleado)
+    entry_telefono.grid(row=4, column=1, padx=10, pady=5)
+
+    def guardar_empleado():
+        nombre = entry_nombre.get()
+        apellido = entry_apellido.get()
+        email = entry_email.get()
+        fecha_ingreso = entry_fecha_ingreso.get()
+        telefono = entry_telefono.get()
+
+        # Insertar el nuevo empleado en la base de datos
+        insert_employee(nombre, apellido, email, fecha_ingreso, telefono)  # Llamamos al modelo
+
+        # Actualizar la tabla principal con el nuevo empleado
+        employees_data = get_employees_with_hours()  # Llamamos al modelo
+        update_table(table, employees_data)  # Actualizamos la vista
+
+        # Cerrar la ventana de agregar empleado
+        ventana_empleado.destroy()
+
+    # Botón para guardar el nuevo empleado
+    btn_guardar = ttk.Button(ventana_empleado, text="Guardar Empleado", command=guardar_empleado)
+    btn_guardar.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
 
 # Función para mostrar la ventana con el reporte específico de un empleado
@@ -62,6 +109,24 @@ def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
     send_button = ttk.Button(ventana_empleado, text="Enviar reporte por correo", command=Send_PDF)
     send_button.grid(row=6, column=0, columnspan=2, padx=10, pady=10)
 
+    def eliminar_empleado():
+        respuesta = tk.messagebox.askyesno("Confirmar eliminación", f"¿Estás seguro de eliminar a {nombre_empleado}?")
+        if respuesta:
+            Delete_Employee(Employee_id)  # Elimina el empleado de la base de datos
+            tk.messagebox.showinfo("Empleado eliminado", f"El empleado {nombre_empleado} ha sido eliminado.")
+            ventana_empleado.destroy()  # Cerrar la ventana de reporte después de eliminar
+            
+            # Actualizar la tabla principal (tabla en la vista del manager)
+            employees_data = get_employees_with_hours()  # Obtener los datos actualizados de los empleados
+            for row in table.get_children():
+                table.delete(row)
+            for employee in employees_data:
+                # Combinar nombre y apellido en el primer valor
+                nombre_completo = f"{employee[1]}"  # Asegúrate de que esto sea correcto según tu consulta
+                table.insert("", tk.END, values=(employee[0],nombre_completo, employee[2], "Ver más"))  # El último valor es un texto para el botón
+    eliminar_button = ttk.Button(ventana_empleado, text="Eliminar empleado", command=eliminar_empleado)
+    eliminar_button.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
+
 def update_table(Employee_Table, data):
     # Limpiar la tabla
     for row in Employee_Table.get_children():
@@ -72,7 +137,7 @@ def update_table(Employee_Table, data):
         Employee_Table.insert("", tk.END, values=row_data)
 
 def start_manager_view(Manager_Id):
-    global root
+    global root, table
     # Crear la ventana principal para el gerente
     root = tk.Tk()
     root.title("Panel del Gerente - Reporte de Horas Trabajadas")
@@ -121,5 +186,20 @@ def start_manager_view(Manager_Id):
 
     # Asociar el clic en la tabla con la función "Ver más"
     table.bind("<Double-1>", on_treeview_click)
+
+    # Botón para agregar un nuevo empleado
+    def agregar_nuevo_empleado():
+        nueva_ventana_empleado()
+
+    btn_agregar_empleado = ttk.Button(root, text="Agregar Nuevo Empleado", command=agregar_nuevo_empleado)
+    btn_agregar_empleado.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
+
+    def on_closing():
+        print("Cerrando la ventana de empleados.")
+        root.destroy()  # Cierra la ventana correctamente sin errores
+        exit()  # Termina el programa sin errores
+    
+    # Asignar la función de cierre a la ventana
+    root.protocol("WM_DELETE_WINDOW", on_closing)
 
     root.mainloop()
