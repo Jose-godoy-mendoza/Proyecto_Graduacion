@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry, Calendar
-from Controllers.ManagerController import get_employees_with_hours, send_report, fetch_employees_data
+from Controllers.ManagerController import get_employees_with_hours, send_report, fetch_employees_data, enviar_payslip_manager
 from Models.EmployeesModel import get_work_hours
 from Models.ManagerModel import Delete_Employee, insert_employee
 from Models.TimeSheetModel import modify_hours_controller, add_hours_controller, obtener_payslips, total_horas_trabajadas
@@ -9,10 +9,10 @@ from Models.TimeSheetModel import modify_hours_controller, add_hours_controller,
 
 
 
-def abrir_payslip(employee_id, fecha_inicio, fecha_fin, monto):
+def abrir_payslip(employee_id, nombre_empleado, fecha_inicio, fecha_fin, monto, Manager_id):
     # Crear una nueva ventana para mostrar los detalles de la payslip
     ventana_payslip = tk.Toplevel()
-    ventana_payslip.title(f"Payslip del Empleado {employee_id}")
+    ventana_payslip.title(f"Payslip del Empleado {employee_id}, {nombre_empleado}")
     ventana_payslip.geometry("400x300")
 
     # Etiquetas para mostrar los detalles de la payslip
@@ -22,6 +22,13 @@ def abrir_payslip(employee_id, fecha_inicio, fecha_fin, monto):
     total_horas = total_horas_trabajadas(employee_id, fecha_inicio, fecha_fin)
     ttk.Label(ventana_payslip, text=f"Total de horas trabajadas: {total_horas}").pack(pady=10)
     ttk.Label(ventana_payslip, text=f"Total a pagar: {monto}").pack(pady=10)
+
+    def enviar_correo():
+        # Llama a la función del controlador que envía el correo
+        enviar_payslip_manager(employee_id, nombre_empleado, fecha_inicio, fecha_fin, total_horas, monto, Manager_id)
+
+    enviar_button = ttk.Button(ventana_payslip, text="Enviar Payslip por Correo", command=enviar_correo)
+    enviar_button.pack(pady=10)
 
     # Botón para cerrar la ventana
     ttk.Button(ventana_payslip, text="Cerrar", command=ventana_payslip.destroy).pack(pady=20)
@@ -272,7 +279,7 @@ def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
             index = combobox_payslips.current()
             if index != -1:
                 fecha_inicio, fecha_fin, monto = payslips[index]
-                abrir_payslip(Employee_id, fecha_inicio, fecha_fin, monto)
+                abrir_payslip(Employee_id, nombre_empleado, fecha_inicio, fecha_fin, monto, Manager_Id)
 
         # Botón para ver detalles de la payslip seleccionada
         ttk.Button(ventana_empleado, text="Ver Payslip", command=mostrar_detalle_payslip).grid(row=9, column=0, columnspan=2, padx=10, pady=10)

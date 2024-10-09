@@ -1,7 +1,7 @@
 from Models.ManagerModel import get_employees_with_hours
 from Models.ManagerModel import get_manager_email
 from Models.EmployeesModel import get_work_hours
-from Controllers.PdfController import generar_pdf, send_email_with_password
+from Controllers.PdfController import generar_pdf, send_email_with_password, enviar_payslip_por_correo
 from datetime import datetime, timedelta
 
 def fetch_employees_data():
@@ -37,3 +37,8 @@ def send_report(Manager_Id, Employee_name, Employee_Id, start_date=None, end_dat
 
     # Generar el reporte en PDF
     generar_pdf(Employee_name, horas_trabajadas, email)
+
+
+def enviar_payslip_manager(employee_id, nombre_empleado, fecha_inicio, fecha_fin, total_horas, monto, Manager_id):
+    employee_info = get_manager_email(Manager_id)
+    enviar_payslip_por_correo(employee_id, nombre_empleado, employee_info, fecha_inicio, fecha_fin, total_horas, monto)

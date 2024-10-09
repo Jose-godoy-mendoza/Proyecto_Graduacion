@@ -122,3 +122,46 @@ def send_email_with_password(to_email, nombre_usuario, contraseña):
         print(f"Contraseña enviada correctamente a {to_email}")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
+
+
+def enviar_payslip_por_correo(employee_id, nombre_empleado, manager_email, fecha_inicio, fecha_fin, total_horas, monto):
+
+    # Detalles del correo
+    email_remitente = "jgodoymnedoza@gmail.com"  # Tu correo de Gmail
+    password = "eouh buim wcuj jksl"  # Usa aquí la contraseña de aplicación generada
+
+    # Crear el mensaje del correo
+    mensaje = MIMEMultipart()
+    mensaje['From'] = email_remitente
+    mensaje['To'] = manager_email
+    mensaje['Subject'] = f"Payslip del Empleado {employee_id} - {nombre_empleado}"
+
+    # Contenido del correo
+    body = f"""
+    Estimado Supervisor,
+
+    A continuación, se detalla la payslip del empleado {nombre_empleado}:
+
+    Fecha Inicio: {fecha_inicio}
+    Fecha Fin: {fecha_fin}
+    Total de horas trabajadas: {total_horas}
+    Total a pagar: {monto}
+
+    Atentamente,
+    Sistema de Gestión de Empleados
+    """
+    
+    mensaje.attach(MIMEText(body, 'plain'))
+
+    try:
+        # Conectar al servidor SMTP de tu proveedor de correo (por ejemplo, Gmail)
+        server = smtplib.SMTP('smtp.gmail.com', 587)  # Cambia esto según tu proveedor de correo
+        server.starttls()
+        server.login(email_remitente, password)
+
+        # Enviar el correo
+        server.send_message(mensaje)
+        server.quit()
+        print(f"Correo enviado a {manager_email}")
+    except Exception as e:
+        print(f"No se pudo enviar el correo: {e}")
