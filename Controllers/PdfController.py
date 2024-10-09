@@ -8,6 +8,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+from email.mime.text import MIMEText
+
 
 def generar_pdf(nombre_empleado, horas_trabajadas, email_empleado):
     # Crear un archivo PDF
@@ -83,3 +85,40 @@ def enviar_email(archivo_pdf, email_destino):
 
 #eouh buim wcuj jksl
 
+def send_email_with_password(to_email, nombre_usuario, contraseña):
+    """Función para enviar el nombre de usuario y la contraseña al empleado por correo electrónico."""
+    email_remitente = "jgodoymnedoza@gmail.com"  # Tu correo de Gmail
+    password = "eouh buim wcuj jksl"  # Usa aquí la contraseña de aplicación generada
+
+    subject = "Detalles de tu cuenta de acceso"
+    message = f"""
+    Hola,
+
+    Tu cuenta ha sido creada exitosamente.
+
+    Usuario: {nombre_usuario}
+    Contraseña: {contraseña}
+
+    
+    Saludos,
+    El equipo de soporte
+    """
+
+    # Configurar el mensaje de correo electrónico
+    msg = MIMEMultipart()
+    msg['From'] = email_remitente
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(message, 'plain'))
+
+    # Enviar el correo usando smtplib
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)  # Cambia por el servidor SMTP que uses (Gmail, Outlook, etc.)
+        server.starttls()
+        server.login(email_remitente, password)
+        text = msg.as_string()
+        server.sendmail(email_remitente, to_email, text)
+        server.quit()
+        print(f"Contraseña enviada correctamente a {to_email}")
+    except Exception as e:
+        print(f"Error al enviar el correo: {e}")

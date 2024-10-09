@@ -6,6 +6,60 @@ from PIL import Image, ImageTk
 from Controllers.LoginController import login
 from Models.EmployeesModel import get_employee_profile, update_employee_profile, get_work_hours
 from Models.ManagerModel import get_employees_with_hours
+from Controllers.LoginController import reset_password_controller
+
+
+
+def open_reset_password_window():
+    # Crear ventana emergente
+    reset_window = tk.Toplevel(root)
+    reset_window.title("Recuperar Contraseña")
+    reset_window.geometry("300x350")
+
+    # Etiqueta y campo para ingresar el nombre de usuario
+    username_label = tk.Label(reset_window, text="Usuario")
+    username_label.pack(pady=5)
+    username_entry = ttk.Entry(reset_window)
+    username_entry.pack(pady=5)
+
+    # Etiqueta y campo para ingresar la nueva contraseña
+    new_password_label = tk.Label(reset_window, text="Nueva Contraseña")
+    new_password_label.pack(pady=5)
+    new_password_entry = ttk.Entry(reset_window, show="*")
+    new_password_entry.pack(pady=5)
+
+    # Etiqueta y campo para confirmar la nueva contraseña
+    confirm_password_label = tk.Label(reset_window, text="Confirmar Contraseña")
+    confirm_password_label.pack(pady=5)
+    confirm_password_entry = ttk.Entry(reset_window, show="*")
+    confirm_password_entry.pack(pady=5)
+
+    # Botón para enviar la solicitud de restablecimiento
+    submit_button = ttk.Button(reset_window, text="Restablecer Contraseña", command=lambda: reset_password(username_entry.get(), new_password_entry.get(), confirm_password_entry.get(), reset_window))
+    submit_button.pack(pady=10)
+
+
+def reset_password(username, new_password, confirm_password, window):
+    if not username:
+        messagebox.showerror("Error", "El nombre de usuario es obligatorio.")
+        return
+
+    if not new_password or not confirm_password:
+        messagebox.showerror("Error", "Debe ingresar y confirmar la nueva contraseña.")
+        return
+
+    if new_password != confirm_password:
+        messagebox.showerror("Error", "Las contraseñas no coinciden.")
+        return
+
+    success = reset_password_controller(username, new_password)
+    if success:
+        messagebox.showinfo("Éxito", "Su contraseña ha sido actualizada exitosamente.")
+        window.destroy()  # Cerrar la ventana de restablecimiento
+    else:
+        messagebox.showerror("Error", "No se pudo restablecer la contraseña. Verifique su nombre de usuario.")
+
+
 
 
 # Función para actualizar la imagen de la cámara en la interfaz
@@ -59,7 +113,7 @@ name_label.place(x=750, y=140)
 
 # Simulación del formulario de inicio de sesión
 login_frame = tk.Frame(background_frame, bg="#34495E")
-login_frame.place(x=750, y=200, width=220, height=280)
+login_frame.place(x=750, y=200, width=220, height=320)
 
 login_label = tk.Label(login_frame, text="Iniciar Sesión", font=('Helvetica', 16), fg="white", bg="#34495E")
 login_label.pack(pady=10)
@@ -89,6 +143,9 @@ def on_login_click():
 login_button = ttk.Button(login_frame, text="Entrar", command=on_login_click)
 login_button.pack(pady=20)
 
+# Botón de "Recuperar contraseña"
+reset_password_button = ttk.Button(login_frame, text="Recuperar contraseña", command=open_reset_password_window)
+reset_password_button.pack(pady=10)
 
 
 # Iniciar la cámara

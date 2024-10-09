@@ -1,10 +1,102 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from tkcalendar import DateEntry
+from tkcalendar import DateEntry, Calendar
 from Controllers.ManagerController import get_employees_with_hours, send_report, fetch_employees_data
 from Models.EmployeesModel import get_work_hours
 from Models.ManagerModel import Delete_Employee, insert_employee
+from Models.TimeSheetModel import modify_hours_controller, add_hours_controller
 
+
+
+
+def modify_hours(employee_id, date, new_hours, window):
+    if not date or not new_hours:
+        messagebox.showerror("Error", "Debe ingresar una fecha y las nuevas horas.")
+        return
+
+    try:
+        new_hours = float(new_hours)  # Asegurarse de que las horas sean numéricas
+    except ValueError:
+        messagebox.showerror("Error", "Las horas deben ser un número.")
+        return
+
+    # Llamada al controlador para actualizar las horas trabajadas
+    success = modify_hours_controller(employee_id, date, new_hours)
+
+    if success:
+        messagebox.showinfo("Éxito", "Las horas trabajadas han sido actualizadas.")
+        window.destroy()  # Cerrar la ventana de modificación
+        # Aquí podrías actualizar la tabla con las nuevas horas trabajadas
+        data = get_work_hours(employee_id)
+        update_table(Employee_Table, data)
+        employees_data = get_employees_with_hours()  # Llamamos al modelo
+        for row in table.get_children():
+                table.delete(row)
+        for employee in employees_data:
+            # Combinar nombre y apellido en el primer valor
+            nombre_completo = f"{employee[1]}"  # Asegúrate de que esto sea correcto según tu consulta
+            table.insert("", tk.END, values=(employee[0],nombre_completo, employee[2], "Ver más"))
+    else:
+        messagebox.showerror("Error", "No se pudo actualizar las horas trabajadas.")
+
+
+def handle_add_hours(employee_id, date_str, hours_str, window):
+    if not date_str or not hours_str:
+        messagebox.showerror("Error", "Debe ingresar una fecha y las horas trabajadas.")
+        return
+
+    try:
+        hours = float(hours_str)  # Asegúrate de que las horas sean numéricas
+    except ValueError:
+        messagebox.showerror("Error", "Las horas deben ser un número.")
+        return
+
+    success = add_hours_controller(employee_id, date_str, hours)
+
+    if success:
+        messagebox.showinfo("Éxito", "Horas agregadas correctamente.")
+        window.destroy()  # Cerrar la ventana de modificación/agregación
+        data = get_work_hours(employee_id)
+        update_table(Employee_Table, data)
+        employees_data = get_employees_with_hours()
+        for row in table.get_children():
+                table.delete(row)
+        for employee in employees_data:
+            # Combinar nombre y apellido en el primer valor
+            nombre_completo = f"{employee[1]}"  # Asegúrate de que esto sea correcto según tu consulta
+            table.insert("", tk.END, values=(employee[0],nombre_completo, employee[2], "Ver más"))
+    else:
+        messagebox.showerror("Error", "No se pudo agregar las horas.")
+
+
+def open_modify_hours_window(employee_id):
+    # Crear ventana emergente
+    modify_window = tk.Toplevel(root)
+    modify_window.title("Modificar o agregar horas")
+    modify_window.geometry("300x200")
+
+    # Etiqueta y campo para seleccionar la fecha
+    date_label = tk.Label(modify_window, text="Fecha")
+    date_label.pack(pady=5)
+    date_entry = DateEntry(modify_window, date_pattern="y-mm-dd")
+    date_entry.pack(pady=10)
+
+    # Etiqueta y campo para ingresar las nuevas horas
+    hours_label = tk.Label(modify_window, text="Nuevas Horas")
+    hours_label.pack(pady=5)
+    hours_entry = ttk.Entry(modify_window)
+    hours_entry.pack(pady=5)
+
+    # Opción para seleccionar "Modificar" o "Agregar"
+    option_label = tk.Label(modify_window, text="¿Qué desea hacer?")
+    option_label.pack(pady=5)
+
+    # Botón para enviar la solicitud de modificación
+    submit_button = ttk.Button(modify_window, text="Guardar cambios", command=lambda: modify_hours(employee_id, date_entry.get(), hours_entry.get(), modify_window))
+    submit_button.pack(pady=10)
+
+    add_button = ttk.Button(modify_window, text="Agregar Horas", command=lambda: handle_add_hours(employee_id, date_entry.get(), hours_entry.get(), modify_window))
+    add_button.pack(pady=10)
 
 
 # AGREGAR UN NUEVO EMPLEADO
@@ -45,7 +137,12 @@ def nueva_ventana_empleado():
 
         # Actualizar la tabla principal con el nuevo empleado
         employees_data = get_employees_with_hours()  # Llamamos al modelo
-        update_table(table, employees_data)  # Actualizamos la vista
+        for row in table.get_children():
+                table.delete(row)
+        for employee in employees_data:
+            # Combinar nombre y apellido en el primer valor
+            nombre_completo = f"{employee[1]}"  # Asegúrate de que esto sea correcto según tu consulta
+            table.insert("", tk.END, values=(employee[0],nombre_completo, employee[2], "Ver más"))
 
         # Cerrar la ventana de agregar empleado
         ventana_empleado.destroy()
@@ -57,6 +154,7 @@ def nueva_ventana_empleado():
 
 # Función para mostrar la ventana con el reporte específico de un empleado
 def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
+    global Employee_Table
     ventana_empleado = tk.Toplevel(root)
     ventana_empleado.title(f"Reporte de {Employee_id, nombre_empleado}")
 
@@ -101,6 +199,7 @@ def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
     update_button = ttk.Button(ventana_empleado, text="Actualizar reporte", command=update_table_with_dates)
     update_button.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
+
     def Send_PDF():
         start_date = start_date_entry.get_date()
         end_date = end_date_entry.get_date()
@@ -126,6 +225,10 @@ def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
                 table.insert("", tk.END, values=(employee[0],nombre_completo, employee[2], "Ver más"))  # El último valor es un texto para el botón
     eliminar_button = ttk.Button(ventana_empleado, text="Eliminar empleado", command=eliminar_empleado)
     eliminar_button.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
+    
+    # Botón para modificar las horas
+    modify_hours_button = ttk.Button(ventana_empleado, text="Modificar horas", command=lambda: open_modify_hours_window(Employee_id))
+    modify_hours_button.grid(row=8, column=0, columnspan=2, padx=10, pady=10)
 
 def update_table(Employee_Table, data):
     # Limpiar la tabla

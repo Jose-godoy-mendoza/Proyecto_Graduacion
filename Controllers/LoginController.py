@@ -31,3 +31,28 @@ def login(username, password):
     user = authenticate_user(username, password)
     return user
 
+
+def reset_password_controller(nombre_usuario, nueva_contraseña):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Verificar si el usuario existe
+    query = "SELECT e.Id_empleado FROM empleados e JOIN usuarios u ON e.Id_empleado = u.id_empleado WHERE u.nombre_usuario = ?"
+    cursor.execute(query, (nombre_usuario,))
+    empleado = cursor.fetchone()
+
+    if empleado:
+        id_empleado = empleado[0]
+
+        # Actualizar la contraseña en la base de datos
+        update_query = "UPDATE usuarios SET contraseña = ? WHERE id_empleado = ?"
+        cursor.execute(update_query, (nueva_contraseña, id_empleado))
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+        return True
+    else:
+        cursor.close()
+        connection.close()
+        return False

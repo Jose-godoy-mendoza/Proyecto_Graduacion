@@ -1,5 +1,8 @@
 from Models.DatabaseModel import get_db_connection
+from Controllers.PdfController import send_email_with_password
 from datetime import datetime
+import secrets
+
 
 def get_employees_with_hours():
     connection = get_db_connection()
@@ -71,12 +74,45 @@ def Delete_Employee(employee_id):
             connection.close()
 
 
+
+
+
+def generate_username(nombre, apellido):
+    """Generar un nombre de usuario único basado en el nombre y apellido."""
+    return f"{nombre.lower()}.{apellido.lower()}"
+
+def generate_password():
+    """Generar una contraseña aleatoria de 8 caracteres."""
+    return secrets.token_urlsafe(8)
+
 def insert_employee(nombre, apellido, email, fecha_ingreso, telefono):
     connection = get_db_connection()
     cursor = connection.cursor()
-    # Aquí iría la inserción del nuevo empleado en la base de datos
-    query = """INSERT INTO Empleados (Nombre, Apellido, Email, fecha_ingreso, telefono)
-               VALUES (?, ?, ?, ?, ?)"""  # Usa '?' como marcadores
-    cursor.execute(query, (nombre, apellido, email, fecha_ingreso, telefono))
+
+    # Insertar el empleado en la tabla empleados
+    query_empleado = """
+    INSERT INTO empleados (nombre, apellido, email, fecha_ingreso, telefono)
+    VALUES (?, ?, ?, ?, ?)
+    """
+    cursor.execute(query_empleado, (nombre, apellido, email, fecha_ingreso, telefono))
+
+    # Obtener el ID del nuevo empleado
+    employee_id = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
+
+    # Crear usuario y contraseña
+    nombre_usuario = generate_username(nombre, apellido)
+    contraseña = generate_password()
+
+    # Insertar el usuario en la tabla Usuario
+    query_usuario = """
+    INSERT INTO Usuarios (Id_empleado, nombre_usuario, Contraseña, Rol)
+    VALUES (?, ?, ?, ?)
+    """
+    cursor.execute(query_usuario, (employee_id, nombre_usuario, contraseña, 'empleado'))  # 'empleado' como Rol por defecto
+
     connection.commit()
-    print("Empleado creado correctamente")
+    cursor.close()
+    connection.close()
+
+    # Enviar la contraseña por correo electrónico usando el PdfController
+    send_email_with_password(email, nombre_usuario, contraseña)

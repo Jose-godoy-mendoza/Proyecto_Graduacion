@@ -1,7 +1,7 @@
 from Models.ManagerModel import get_employees_with_hours
 from Models.ManagerModel import get_manager_email
 from Models.EmployeesModel import get_work_hours
-from Controllers.PdfController import generar_pdf
+from Controllers.PdfController import generar_pdf, send_email_with_password
 from datetime import datetime, timedelta
 
 def fetch_employees_data():
@@ -34,9 +34,6 @@ def send_report(Manager_Id, Employee_name, Employee_Id, start_date=None, end_dat
 
     # Obtener las horas trabajadas del empleado
     horas_trabajadas = get_work_hours(Employee_Id, start_date, end_date)
-
-    # Obtener el nombre del empleado (puedes agregar la lógica si es necesario)
-    # Suponiendo que tienes una función para obtener el nombre del empleado
 
     # Generar el reporte en PDF
     generar_pdf(Employee_name, horas_trabajadas, email)
