@@ -4,10 +4,29 @@ from tkcalendar import DateEntry, Calendar
 from Controllers.ManagerController import get_employees_with_hours, send_report, fetch_employees_data
 from Models.EmployeesModel import get_work_hours
 from Models.ManagerModel import Delete_Employee, insert_employee
-from Models.TimeSheetModel import modify_hours_controller, add_hours_controller
+from Models.TimeSheetModel import modify_hours_controller, add_hours_controller, obtener_payslips, total_horas_trabajadas
 
 
 
+
+def abrir_payslip(employee_id, fecha_inicio, fecha_fin, monto):
+    # Crear una nueva ventana para mostrar los detalles de la payslip
+    ventana_payslip = tk.Toplevel()
+    ventana_payslip.title(f"Payslip del Empleado {employee_id}")
+    ventana_payslip.geometry("400x300")
+
+    # Etiquetas para mostrar los detalles de la payslip
+    ttk.Label(ventana_payslip, text=f"Fecha Inicio: {fecha_inicio}").pack(pady=10)
+    ttk.Label(ventana_payslip, text=f"Fecha Fin: {fecha_fin}").pack(pady=10)
+    # Obtener y mostrar el total de horas trabajadas durante ese periodo
+    total_horas = total_horas_trabajadas(employee_id, fecha_inicio, fecha_fin)
+    ttk.Label(ventana_payslip, text=f"Total de horas trabajadas: {total_horas}").pack(pady=10)
+    ttk.Label(ventana_payslip, text=f"Total a pagar: {monto}").pack(pady=10)
+
+    # Botón para cerrar la ventana
+    ttk.Button(ventana_payslip, text="Cerrar", command=ventana_payslip.destroy).pack(pady=20)
+
+#------------------------- FUNCIONES PARA MANEJAR HORAS -------------------------#
 
 def modify_hours(employee_id, date, new_hours, window):
     if not date or not new_hours:
@@ -40,7 +59,7 @@ def modify_hours(employee_id, date, new_hours, window):
         messagebox.showerror("Error", "No se pudo actualizar las horas trabajadas.")
 
 
-def handle_add_hours(employee_id, date_str, hours_str, window):
+def add_hours(employee_id, date_str, hours_str, window):
     if not date_str or not hours_str:
         messagebox.showerror("Error", "Debe ingresar una fecha y las horas trabajadas.")
         return
@@ -68,12 +87,15 @@ def handle_add_hours(employee_id, date_str, hours_str, window):
     else:
         messagebox.showerror("Error", "No se pudo agregar las horas.")
 
+#------------------------- FUNCIONES PARA MANEJAR HORAS -------------------------#
 
+
+#------------------------- VENTANA DE HORAS -------------------------#
 def open_modify_hours_window(employee_id):
     # Crear ventana emergente
     modify_window = tk.Toplevel(root)
     modify_window.title("Modificar o agregar horas")
-    modify_window.geometry("300x200")
+    modify_window.geometry("300x350")
 
     # Etiqueta y campo para seleccionar la fecha
     date_label = tk.Label(modify_window, text="Fecha")
@@ -95,11 +117,12 @@ def open_modify_hours_window(employee_id):
     submit_button = ttk.Button(modify_window, text="Guardar cambios", command=lambda: modify_hours(employee_id, date_entry.get(), hours_entry.get(), modify_window))
     submit_button.pack(pady=10)
 
-    add_button = ttk.Button(modify_window, text="Agregar Horas", command=lambda: handle_add_hours(employee_id, date_entry.get(), hours_entry.get(), modify_window))
+    add_button = ttk.Button(modify_window, text="Agregar Horas", command=lambda: add_hours(employee_id, date_entry.get(), hours_entry.get(), modify_window))
     add_button.pack(pady=10)
 
+#------------------------- VENTANA DE HORAS -------------------------#
 
-# AGREGAR UN NUEVO EMPLEADO
+#------------------------- VENTANA DE EMPLEADO -------------------------#
 def nueva_ventana_empleado():
     ventana_empleado = tk.Toplevel(root)
     ventana_empleado.title("Agregar Nuevo Empleado")
@@ -152,6 +175,7 @@ def nueva_ventana_empleado():
     btn_guardar.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
 
+#------------------------- VENTANA DE REPORTE EMPLEADOS -------------------------#
 # Función para mostrar la ventana con el reporte específico de un empleado
 def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
     global Employee_Table
@@ -197,7 +221,7 @@ def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
         update_table(Employee_Table, data)
 
     update_button = ttk.Button(ventana_empleado, text="Actualizar reporte", command=update_table_with_dates)
-    update_button.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
+    update_button.grid(row=5, column=0, padx=10, pady=10)
 
 
     def Send_PDF():
@@ -206,7 +230,7 @@ def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
         send_report(Manager_Id, nombre_empleado, Employee_id, start_date, end_date)
 
     send_button = ttk.Button(ventana_empleado, text="Enviar reporte por correo", command=Send_PDF)
-    send_button.grid(row=6, column=0, columnspan=2, padx=10, pady=10)
+    send_button.grid(row=5, column=1, padx=10, pady=10)
 
     def eliminar_empleado():
         respuesta = tk.messagebox.askyesno("Confirmar eliminación", f"¿Estás seguro de eliminar a {nombre_empleado}?")
@@ -224,11 +248,39 @@ def mostrar_reporte_empleado(Employee_id, nombre_empleado, Manager_Id):
                 nombre_completo = f"{employee[1]}"  # Asegúrate de que esto sea correcto según tu consulta
                 table.insert("", tk.END, values=(employee[0],nombre_completo, employee[2], "Ver más"))  # El último valor es un texto para el botón
     eliminar_button = ttk.Button(ventana_empleado, text="Eliminar empleado", command=eliminar_empleado)
-    eliminar_button.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
+    eliminar_button.grid(row=6, column=0, padx=10, pady=10)
     
     # Botón para modificar las horas
     modify_hours_button = ttk.Button(ventana_empleado, text="Modificar horas", command=lambda: open_modify_hours_window(Employee_id))
-    modify_hours_button.grid(row=8, column=0, columnspan=2, padx=10, pady=10)
+    modify_hours_button.grid(row=6, column=1, padx=10, pady=10)
+
+
+
+    # Espacio para mostrar las Payslips
+    ttk.Label(ventana_empleado, text="Payslips:").grid(row=7, column=0, columnspan=2, padx=10, pady=10)
+
+    # Dropdown list (Combobox) para seleccionar la payslip
+    payslips = obtener_payslips(Employee_id)
+
+    if payslips:
+        fechas_payslips = [f"Desde {ps[0]} hasta {ps[1]}" for ps in payslips]
+        combobox_payslips = ttk.Combobox(ventana_empleado, values=fechas_payslips, state="readonly", width=30)
+        combobox_payslips.grid(row=8, column=0, columnspan=2, padx=10, pady=10)
+
+        def mostrar_detalle_payslip():
+            # Obtener el índice de la payslip seleccionada
+            index = combobox_payslips.current()
+            if index != -1:
+                fecha_inicio, fecha_fin, monto = payslips[index]
+                abrir_payslip(Employee_id, fecha_inicio, fecha_fin, monto)
+
+        # Botón para ver detalles de la payslip seleccionada
+        ttk.Button(ventana_empleado, text="Ver Payslip", command=mostrar_detalle_payslip).grid(row=9, column=0, columnspan=2, padx=10, pady=10)
+    else:
+        ttk.Label(ventana_empleado, text="No hay payslips registradas para este empleado.").grid(row=10, column=0, columnspan=2, padx=10, pady=10)
+
+
+
 
 def update_table(Employee_Table, data):
     # Limpiar la tabla

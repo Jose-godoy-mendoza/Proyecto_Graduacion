@@ -53,3 +53,40 @@ def add_hours_controller(employee_id, date_str, new_hours):
     except Exception as e:
         print(f"Error al agregar las horas: {e}")
         return False  # Devolver fallo
+
+
+def obtener_payslips(employee_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    query = """
+    SELECT fecha_inicio, fecha_fin, monto
+    FROM Payslips
+    WHERE Id_empleado = ?
+    ORDER BY fecha_inicio DESC
+    """
+    cursor.execute(query, employee_id)
+    payslips = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return payslips
+
+def total_horas_trabajadas(Employee_id, fecha_inicio, fecha_fin):
+    # Consulta para obtener el total de horas trabajadas entre las fechas dadas
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = """
+        SELECT SUM(Horas_totales)
+        FROM Horas_Trabajadas
+        WHERE Id_empleado = ? AND fecha BETWEEN ? AND ?
+    """
+    # Ejecuta la consulta y retorna el total de horas
+    cursor.execute(query, (Employee_id, fecha_inicio, fecha_fin))
+    resultado = cursor.fetchone()
+    
+    # Si no hay registros, retorna 0
+    print("----",resultado," fechas: ", fecha_inicio, ", ", fecha_fin)
+    total_horas = resultado[0] if resultado[0] is not None else 0
+    return total_horas
